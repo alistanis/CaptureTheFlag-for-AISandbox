@@ -1,0 +1,67 @@
+
+Java SDK for AI sandbox
+by Matthias F. Brandstetter
+
+http://aisandbox.com/
+
+
+VERSION HISTORY
+---------------
+
+v1.3.2 (2012-12-28)
+ - added getCenter() method to Area util class
+ - renamed method BotInfo.getSeenlast() to BotInfo.getSeenLast()
+ - changed visibility of Vector2.x and Vector2.y to private, added setX() and setY()
+ - minor update to default commander
+ - minor bugfix in BotInfo class
+ 
+v1.3.1 (2012-12-22)
+ - don't timeout if commander's tick() method runs too long
+ 
+v1.3 (2012-12-21)
+ - updated Java client to support network protocol 1.3
+ - updated documentation
+
+v1.2.5 (2012-12-20)
+ - marked method GameInfo.getFlagInfo() as deprecated
+ - minor bug fixed in sample commander
+ - better exception handling at connection attempt
+ - SandboxClientWrapper.VERBOSE is now true by default
+
+v1.2.4 (2012-12-10)
+ - added getScores() method to the MatchInfo class
+ - added getTimePassed() method to the MatchInfo class
+ - fixed bug in AttackCmd class with lookAt parameter 
+ - updated README file
+
+v1.2.3 (2012-12-05)
+ - wait some time for sandbox server to show up
+ - added VERBOSE flag to SandboxClientWrapper class
+ - added CONNECT_TIMEOUT to SandboxClientWrapper class
+
+v1.2.2 (2012-12-04)
+ - updated Java client to support network protocol 1.2.1
+
+v1.2.1 (2012-11-26)
+ - fixed bug, now enemy bots correctly show in gameInfo.getBots()
+ - minor bug fix for default MyCommander
+
+v1.2 (2012-11-26)
+ - added getBot() method to BotCommand class
+ - made Vector2 class immutable (add(), sub(), etc.)
+ - updated Javadoc
+
+v1.1 (2012-11-22)
+ - updated to network protocol 1.2
+ - updated facingDirections parameter of Defend command
+ - new match combat events: FLAG_CAPTURED, FLAG_RESTORED, RESPAWN
+
+v1.0 (2012-11-20)
+ - final public release
+
+v0.2 (2012-11-20)
+ - support for AI sandbox network protocol version 1.1
+
+v0.1 (2012-11-19)
+ - first public (beta) release
+

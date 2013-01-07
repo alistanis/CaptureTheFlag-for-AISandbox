@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="libs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/CaptureTheFlag_src.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/json-simple-1.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/netty-3.5.10.Final.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
