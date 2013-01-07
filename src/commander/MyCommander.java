@@ -9,12 +9,7 @@ import com.aisandbox.cmd.cmds.*;
 import com.aisandbox.util.*;
 
 
-/**
- * Sample "balanced" commander for the AI sandbox.
- * One bot attacking, one defending and the rest randomly searching the level for enemies.
- *
- * @author Matthias F. Brandstetter
- */
+
 public class MyCommander extends SandboxCommander {
     private String myTeam;
     private String enemyTeam;
