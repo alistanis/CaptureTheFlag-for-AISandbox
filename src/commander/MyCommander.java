@@ -38,6 +38,7 @@ public class MyCommander extends SandboxCommander {
     private ArrayList<BotInfo> scouts;
     private ArrayList<BotInfo> avengers;
 
+    private BotInfo[] attackerArray;
 
     /**
      * Custom commander class construtor.
@@ -65,7 +66,10 @@ public class MyCommander extends SandboxCommander {
 
         myTeamSize = gameInfo.getMyTeamInfo().getMembers().size();
 
+        attackerArray = new BotInfo[myTeamSize];
+
         bots = gameInfo.getBots();
+
 
 
         attackers = new ArrayList<BotInfo>();
@@ -113,22 +117,79 @@ public class MyCommander extends SandboxCommander {
         if (defender != null && defender.getHealth() <= 0)
             defender = null; // the defender is dead we'll pick another when available
 
+        for (int i = 0; i < attackerArray.length - 1; i++){
+           if(attackerArray[i] != null)
+               /*
+               so far every time it has checked the bot health, it's 100, so this never gets called, the bots never get removed
+                */
+            System.out.println("Checking bot health: " + attackerArray[i].getHealth());
+            if (attackerArray[i] != null && attackerArray[i].getHealth() <= 0) {
+                attackerArray[i] = null;
+                System.out.println("attackerArray index " + i + " set to null");
+            }
+            }
 
         // loop through all living bots without orders
         for (BotInfo bot : gameInfo.botsAvailable()) {
+
+                /*
+                i tried removing the for loop below, which seemed like it would work, but i started getting null pointers because the botsAvailable
+                is sometimes a different size than attackerArray and it got angry
+                 */
+                for(int i = 0; i < attackerArray.length; i++) {
+                    if (attackerArray[i] != null){
+                    break;
+                    }
+                if (attackerArray[i] == null || attackerArray[i].equals(bot) || attackerArray[i].hasFlag()){
+                    attackerArray[i] = bot;
+                    System.out.println("Attacker set at index " + i);
+                }
+                    if(attackerArray[i].hasFlag())
+                    {
+                        // tell the flag carrier to run home
+                        System.out.println((attackerArray[i].getName()) + " has the flag");
+                        Vector2 target = levelInfo.getFlagScoreLocations().get(myTeam);
+                        issue(new MoveCmd(attackerArray[i].getName(), target, "running home"));
+                    }
+                    else
+                    {
+                        System.out.println("Attacker does not have flag");
+                        Vector2 target = gameInfo.getEnemyFlagInfo().getPosition();
+                        Vector2 flank = getFlankingPosition(attackerArray[i], target);
+                        System.out.println("Set target and flank position to " + target + " and " + flank);
+                        if(target.sub(flank).length() > attackerArray[i].getPosition().sub(target).length())  {
+                            issue(new AttackCmd(attackerArray[i].getName(), target, null, "attack from flank"));
+                            System.out.println(attackerArray[i].getName() + " attacking flag from flank");
+                        }
+                        else
+                        {
+                            flank = levelInfo.findNearestFreePosition(flank);
+                            issue(new MoveCmd(attackerArray[i].getName(), flank, "running to flank"));
+                            System.out.println(attackerArray[i].getName() + " running to flank");
+                        }
+                    }
+                }
+
+
+
 
             /*TODO
             When adding bots to the lists, need to set the index Object equal to the bot object I'm iterating through!
             ie; the opposite of what the determineRoles() method below does.
              */
-
+            /*
             determineRoles(bot);
             attackerBehavior(bot);
             scoutBehavior(bot);
             defenderBehavior(bot);
             avengerBehavior(bot);
+              */
+        }
+        for (int i = 0; i < attackerArray.length; i ++){
 
         }
+         /*
+         this also didn't work -
         if (attackers.size() >= 1)
             System.out.println("checking attackers list size");
         for(int i = 0; i < attackers.size() - 1; i++){
@@ -139,12 +200,13 @@ public class MyCommander extends SandboxCommander {
                attackers.remove(i);
            }
         }
-
-        /*  Not a solution, but when I started clearing the list here I figured out what I needed to do */
+         */
+        /*  Not a solution, but when I started clearing the list here at least it was assigning bots orders and making them do things
+         * every pass */
         /*TODO
           Add actual removal from list logic and place it before the gameInfo.botsAvailable loop
          */
-        attackers.clear();
+        //attackers.clear();
         scouts.clear();
         defenders.clear();
         avengers.clear();
