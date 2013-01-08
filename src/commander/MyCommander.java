@@ -29,6 +29,7 @@ public class MyCommander extends SandboxCommander {
     private BotInfo attacker;
     private BotInfo defender;
 
+    private ArrayList<String> enemyTeamMemberNames;
 
     private ArrayList<BotInfo> attackers;
     private ArrayList<BotInfo> defenders;
@@ -58,6 +59,8 @@ public class MyCommander extends SandboxCommander {
         // set the name of our and the enemy teams
         myTeam = gameInfo.getTeam();
         enemyTeam = gameInfo.getEnemyTeam();
+
+        enemyTeamMemberNames = (ArrayList<String>) gameInfo.getEnemyTeamInfo().getMembers();
 
         myTeamSize = gameInfo.getMyTeamInfo().getMembers().size();
 
@@ -99,7 +102,9 @@ public class MyCommander extends SandboxCommander {
     @Override
     public void tick() {
           System.out.println("list size: " + attackers.size());
-
+         if (attackers.size() > myTeamSize){
+             checkListForEnemyBotNames(attackers, enemyTeamMemberNames);
+         }
         if (attacker != null && attacker.getHealth() <= 0)
             attacker = null; // the attacker is dead we'll pick another when available
 
@@ -109,7 +114,7 @@ public class MyCommander extends SandboxCommander {
         for (int i = 0; i < attackers.size(); i++) {
             if (attackers.get(i) != null && attackers.get(i).getHealth() <= 0) {
                 System.out.println(attackers.get(i).getHealth());
-                attackers.remove(attackers.get(i));
+                removeFromList(attackers, attackers.get(i));
             }
         }
 
@@ -198,6 +203,24 @@ public class MyCommander extends SandboxCommander {
         }
         if (remove == true){
          list.remove(i);
+        }
+    }
+
+    private void checkListForEnemyBotNames(ArrayList<BotInfo> myTeam, ArrayList<String> enemyTeamNames){
+
+        int i = 0;
+        boolean remove = false;
+        for (BotInfo myBots : myTeam) {
+            for(String enemyBots : enemyTeamNames){
+            if (myBots.getName().equals(enemyBots)) {
+                System.out.println("Match found for removal - Wrong Team");
+                i = myTeam.indexOf(myBots);
+                remove = true;
+            }
+            }
+        }
+        if (remove == true){
+            myTeam.remove(i);
         }
     }
 
@@ -320,6 +343,9 @@ public class MyCommander extends SandboxCommander {
      */
     @Override
     public void shutdown() {
+        for (int i = 0; i < attackers.size(); i++) {
+            System.out.println(attackers.get(i).getName());
+        }
         System.out.println("<shutdown> message received from server");
     }
 }
