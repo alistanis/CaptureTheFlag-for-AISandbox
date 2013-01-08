@@ -9,7 +9,6 @@ import com.aisandbox.cmd.cmds.*;
 import com.aisandbox.util.*;
 
 
-
 public class MyCommander extends SandboxCommander {
     private String myTeam;
     private String enemyTeam;
@@ -30,15 +29,12 @@ public class MyCommander extends SandboxCommander {
     private BotInfo attacker;
     private BotInfo defender;
 
-    private Map<String, TeamInfo> myTeamInfo;
-    private Map<String, BotInfo> bots;
 
     private ArrayList<BotInfo> attackers;
     private ArrayList<BotInfo> defenders;
     private ArrayList<BotInfo> scouts;
     private ArrayList<BotInfo> avengers;
 
-    private BotInfo[] attackerArray;
 
     /**
      * Custom commander class construtor.
@@ -48,7 +44,6 @@ public class MyCommander extends SandboxCommander {
 
         attacker = null;
         defender = null;
-
 
 
     }
@@ -65,11 +60,6 @@ public class MyCommander extends SandboxCommander {
         enemyTeam = gameInfo.getEnemyTeam();
 
         myTeamSize = gameInfo.getMyTeamInfo().getMembers().size();
-
-        attackerArray = new BotInfo[myTeamSize];
-
-        bots = gameInfo.getBots();
-
 
 
         attackers = new ArrayList<BotInfo>();
@@ -108,8 +98,7 @@ public class MyCommander extends SandboxCommander {
      */
     @Override
     public void tick() {
-
-
+          System.out.println("list size: " + attackers.size());
 
         if (attacker != null && attacker.getHealth() <= 0)
             attacker = null; // the attacker is dead we'll pick another when available
@@ -117,102 +106,56 @@ public class MyCommander extends SandboxCommander {
         if (defender != null && defender.getHealth() <= 0)
             defender = null; // the defender is dead we'll pick another when available
 
-        for (int i = 0; i < attackerArray.length - 1; i++){
-           if(attackerArray[i] != null)
-               /*
-               so far every time it has checked the bot health, it's 100, so this never gets called, the bots never get removed
-                */
-            System.out.println("Checking bot health: " + attackerArray[i].getHealth());
-            if (attackerArray[i] != null && attackerArray[i].getHealth() <= 0) {
-                attackerArray[i] = null;
-                System.out.println("attackerArray index " + i + " set to null");
+        for (int i = 0; i < attackers.size(); i++) {
+            if (attackers.get(i) != null && attackers.get(i).getHealth() <= 0) {
+                System.out.println(attackers.get(i).getHealth());
+                attackers.remove(attackers.get(i));
             }
-            }
+        }
 
         // loop through all living bots without orders
         for (BotInfo bot : gameInfo.botsAvailable()) {
 
-                /*
-                i tried removing the for loop below, which seemed like it would work, but i started getting null pointers because the botsAvailable
-                is sometimes a different size than attackerArray and it got angry
-                 */
-                for(int i = 0; i < attackerArray.length; i++) {
-                    if (attackerArray[i] != null){
-                    break;
-                    }
-                if (attackerArray[i] == null || attackerArray[i].equals(bot) || attackerArray[i].hasFlag()){
-                    attackerArray[i] = bot;
-                    System.out.println("Attacker set at index " + i);
-                }
-                    if(attackerArray[i].hasFlag())
-                    {
-                        // tell the flag carrier to run home
-                        System.out.println((attackerArray[i].getName()) + " has the flag");
-                        Vector2 target = levelInfo.getFlagScoreLocations().get(myTeam);
-                        issue(new MoveCmd(attackerArray[i].getName(), target, "running home"));
-                    }
-                    else
-                    {
+            if (!isBotAssigned(bot)) {
+                attackers.add(bot);
+                System.out.println(bot.getName());
+            } else {
+                removeFromList(attackers, bot);
+                attackers.add(bot);
+                int botIndex = attackers.indexOf(bot);
+                System.out.println(botIndex);
+
+                if (attackers.get(botIndex).hasFlag()) {
+                    // tell the flag carrier to run home
+                    System.out.println((attackers.get(botIndex)) + " has the flag");
+                    Vector2 target = levelInfo.getFlagScoreLocations().get(myTeam);
+                    issue(new MoveCmd(attackers.get(botIndex).getName(), target, "running home"));
+                } else {
+                    if (attackers.get(botIndex).getVisibleEnemies().size() > 0) {
+                        List<String> visibleEnemies = bot.getVisibleEnemies();
+                        Vector2 target = gameInfo.getEnemyFlagInfo().getPosition();
+
+                        issue(new AttackCmd(attackers.get(botIndex).getName(), target, null, "enemies seen"));
+                    } else {
+
                         System.out.println("Attacker does not have flag");
                         Vector2 target = gameInfo.getEnemyFlagInfo().getPosition();
-                        Vector2 flank = getFlankingPosition(attackerArray[i], target);
+                        Vector2 flank = getFlankingPosition(bot, target);
                         System.out.println("Set target and flank position to " + target + " and " + flank);
-                        if(target.sub(flank).length() > attackerArray[i].getPosition().sub(target).length())  {
-                            issue(new AttackCmd(attackerArray[i].getName(), target, null, "attack from flank"));
-                            System.out.println(attackerArray[i].getName() + " attacking flag from flank");
-                        }
-                        else
-                        {
+                        if (target.sub(flank).length() > attackers.get(botIndex).getPosition().sub(target).length()) {
+                            issue(new AttackCmd(attackers.get(botIndex).getName(), target, null, "attack from flank"));
+                            System.out.println(attackers.get(botIndex).getName() + " attacking flag from flank");
+                        } else {
                             flank = levelInfo.findNearestFreePosition(flank);
-                            issue(new MoveCmd(attackerArray[i].getName(), flank, "running to flank"));
-                            System.out.println(attackerArray[i].getName() + " running to flank");
+                            issue(new ChargeCmd(attackers.get(botIndex).getName(), flank, "running to flank"));
+                            System.out.println(attackers.get(botIndex).getName() + " running to flank");
+                        }
                         }
                     }
                 }
-
-
-
-
-            /*TODO
-            When adding bots to the lists, need to set the index Object equal to the bot object I'm iterating through!
-            ie; the opposite of what the determineRoles() method below does.
-             */
-            /*
-            determineRoles(bot);
-            attackerBehavior(bot);
-            scoutBehavior(bot);
-            defenderBehavior(bot);
-            avengerBehavior(bot);
-              */
-        }
-        for (int i = 0; i < attackerArray.length; i ++){
-
-        }
-         /*
-         this also didn't work -
-        if (attackers.size() >= 1)
-            System.out.println("checking attackers list size");
-        for(int i = 0; i < attackers.size() - 1; i++){
-           BotInfo bot = attackers.get(i);
-
-           if (bot.getHealth() <= 0)  {
-               System.out.println("removing bot");
-               attackers.remove(i);
-           }
-        }
-         */
-        /*  Not a solution, but when I started clearing the list here at least it was assigning bots orders and making them do things
-         * every pass */
-        /*TODO
-          Add actual removal from list logic and place it before the gameInfo.botsAvailable loop
-         */
-        //attackers.clear();
-        scouts.clear();
-        defenders.clear();
-        avengers.clear();
-
-
+            }
     }
+
 
     private Vector2 getFlankingPosition(BotInfo bot, Vector2 target) {
         List<Vector2> options = new ArrayList<Vector2>();
@@ -232,37 +175,37 @@ public class MyCommander extends SandboxCommander {
     private boolean isBotAssigned(BotInfo bot) {
         String botName = bot.getName();
         if (attackers != null) {
-            for(BotInfo bot2 : attackers)
-            if(bot2.getName().equals(botName)){
-                System.out.println("Bot is assigned");
-           return true;
-            }
+            for (BotInfo bot2 : attackers)
+                if (bot2.getName().equals(botName)) {
+                    System.out.println("Bot is assigned");
+                    return true;
+                }
         }
         System.out.println("Bot is not assigned");
         return false;
     }
 
-    private void removeFromList(ArrayList<BotInfo> list, BotInfo bot){
-        String checkBotName = bot.getName();
-        for (BotInfo botList : list){
-             if (botList.getName().equals(checkBotName))
-             {
-                 System.out.println("Match found for removal");
-                 list.remove(bot);
-             }
+    private void removeFromList(ArrayList<BotInfo> list, BotInfo bot) {
+        String botName = bot.getName();
+        for (BotInfo botInList : list) {
+            if (botInList.getName().equals(botName)) {
+                System.out.println("Match found for removal");
+                int i = list.indexOf(botInList);
+                list.remove(bot);
+            }
         }
     }
 
     //add bots to lists
     private void determineRoles(BotInfo bot) {
-        if  ((attackers.size() >= 0) && (attackers.size() < (myTeamSize/4)))
-        addAttackers(bot);
-        else if ((defenders.size() >=0) && (defenders.size() < (myTeamSize /4)))
-        addDefenders(bot);
-        else if ((scouts.size() >=0) && (scouts.size() < (myTeamSize /4)))
-        addScouts(bot);
+        if ((attackers.size() >= 0) && (attackers.size() < (myTeamSize / 4)))
+            addAttackers(bot);
+        else if ((defenders.size() >= 0) && (defenders.size() < (myTeamSize / 4)))
+            addDefenders(bot);
+        else if ((scouts.size() >= 0) && (scouts.size() < (myTeamSize / 4)))
+            addScouts(bot);
         else
-        addAvengers(bot);
+            addAvengers(bot);
     }
 
     //adds to attacker list
@@ -270,12 +213,11 @@ public class MyCommander extends SandboxCommander {
 
         if (!isBotAssigned(bot)) {
             String botName = bot.getName();
-           if (botName != null){
-            attackers.add (bot);
-            System.out.println("attacker " + botName +" added to list");
-           }
-        }
-            else {
+            if (botName != null) {
+                attackers.add(bot);
+                System.out.println("attacker " + botName + " added to list");
+            }
+        } else {
         }
     }
 
@@ -283,12 +225,11 @@ public class MyCommander extends SandboxCommander {
     private void addDefenders(BotInfo bot) {
         if (!isBotAssigned(bot)) {
             String botName = bot.getName();
-            if (botName != null){
-                defenders.add (bot);
-                System.out.println("defender " + botName +" added to list");
+            if (botName != null) {
+                defenders.add(bot);
+                System.out.println("defender " + botName + " added to list");
             }
-        }
-        else {
+        } else {
         }
     }
 
@@ -296,12 +237,11 @@ public class MyCommander extends SandboxCommander {
     private void addScouts(BotInfo bot) {
         if (!isBotAssigned(bot)) {
             String botName = bot.getName();
-            if (botName != null){
-                scouts.add (bot);
-                System.out.println("scout " + botName +" added to list");
+            if (botName != null) {
+                scouts.add(bot);
+                System.out.println("scout " + botName + " added to list");
             }
-        }
-        else {
+        } else {
         }
     }
 
@@ -349,7 +289,7 @@ public class MyCommander extends SandboxCommander {
                 dirs.add(new FacingDirection(left.sub(bot.getPosition()), 1));
                 dirs.add(new FacingDirection(middle.sub(bot.getPosition()), 1));
                 issue(new DefendCmd(bot.getName(), dirs, "turning to defend"));
-        }
+            }
         }
     }
 
