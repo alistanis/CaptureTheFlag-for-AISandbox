@@ -203,7 +203,7 @@ public class MyCommander extends SandboxCommander {
         System.out.println("Bot is not assigned");
         return false;
     }
-
+    //removes the selected bot if it is found in the list by index after string comparison
     private void removeFromList(ArrayList<BotInfo> list, BotInfo bot) {
         String botName = bot.getName();
         int i = 0;
@@ -219,7 +219,7 @@ public class MyCommander extends SandboxCommander {
             list.remove(i);
         }
     }
-
+    //for some reason, the botsAvailable method is returning members of the opposite team in my list, so this checks for that and removes them
     private void checkListForEnemyBotNames(ArrayList<BotInfo> myTeam, ArrayList<String> enemyTeamNames) {
 
         int i = 0;
@@ -237,7 +237,7 @@ public class MyCommander extends SandboxCommander {
             myTeam.remove(i);
         }
     }
-
+    //returns an arraylist of all the visible enemy positions in the visible enemies list
     private ArrayList<Vector2> getVisibleEnemyPositionsList(List<String> visibleEnemies){
 
         ArrayList visibleEnemyPositions = new ArrayList<Vector2>();
@@ -254,6 +254,9 @@ public class MyCommander extends SandboxCommander {
     }
 
     //add bots to lists
+    /*TODO
+    actually implement this
+     */
     private void determineRoles(BotInfo bot) {
         if ((attackers.size() >= 0) && (attackers.size() < (myTeamSize / 4)))
             addAttackers(bot);
@@ -266,6 +269,9 @@ public class MyCommander extends SandboxCommander {
     }
 
     //adds to attacker list
+    /*TODO
+    Recode all add methods for BotInfo lists
+     */
     private void addAttackers(BotInfo bot) {
 
         if (!isBotAssigned(attackers, bot)) {
@@ -309,7 +315,9 @@ public class MyCommander extends SandboxCommander {
         else {
         }
     }
-
+    /*TODO
+    recode all behavior methods except flag carry method
+     */
     private void attackerBehavior(BotInfo bot) {
         System.out.println("attack method called");
         if (attackers.contains(bot)) {
