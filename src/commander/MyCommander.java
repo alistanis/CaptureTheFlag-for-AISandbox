@@ -187,12 +187,17 @@ public class MyCommander extends SandboxCommander {
 
     private void removeFromList(ArrayList<BotInfo> list, BotInfo bot) {
         String botName = bot.getName();
+        int i = 0;
+        boolean remove = false;
         for (BotInfo botInList : list) {
             if (botInList.getName().equals(botName)) {
                 System.out.println("Match found for removal");
-                int i = list.indexOf(botInList);
-                list.remove(bot);
+                 i = list.indexOf(botInList);
+                remove = true;
             }
+        }
+        if (remove == true){
+         list.remove(i);
         }
     }
 
