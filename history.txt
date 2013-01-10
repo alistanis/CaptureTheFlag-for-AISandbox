@@ -8,6 +8,15 @@ http://aisandbox.com/
 VERSION HISTORY
 ---------------
 
+v1.3.3 (2013-01-07)
+ - added new method BotInfo.isAlive()
+ - added new method GameInfo.botsHolding()
+ - added new methods Vector2.add(float) and Vector2.sub(float)
+ - fixed bug in GameInfo: botsAvailable() and botsAlive() now only return our team's bots
+ - fixed typo in BotInfo.STATE_DEFENDING
+ - minor bugs fixed in default commander: bots are now flanking correctly
+ - added sample application of new method GameInfo.botsHolding() to default commander
+
 v1.3.2 (2012-12-28)
  - added getCenter() method to Area util class
  - renamed method BotInfo.getSeenlast() to BotInfo.getSeenLast()

@@ -33,12 +33,16 @@ public class MyCommander extends SandboxCommander {
     private BotInfo defender;
 
     private ArrayList<String> enemyTeamMemberNames;
-    private List<BotInfo> allLivingBots;
+    private ArrayList<BotInfo> allLivingBots;
 
     private ArrayList<BotInfo> attackers;
     private ArrayList<BotInfo> defenders;
     private ArrayList<BotInfo> scouts;
     private ArrayList<BotInfo> avengers;
+
+    private List<BotInfo> visibleEnemies;
+
+    private int blockHeights[][];
 
 
     /**
@@ -71,10 +75,16 @@ public class MyCommander extends SandboxCommander {
         isOurFlagHeld = false;
         doWeHaveTheirFlag = false;
 
+
+        blockHeights = levelInfo.getBlockHeights();
+
         attackers = new ArrayList<BotInfo>();
         defenders = new ArrayList<BotInfo>();
         scouts = new ArrayList<BotInfo>();
         avengers = new ArrayList<BotInfo>();
+
+        visibleEnemies = new ArrayList<BotInfo>();
+
         // Calculate flag positions and store the middle.
         Vector2 ours = gameInfo.getMyFlagInfo().getPosition();
         Vector2 theirs = gameInfo.getEnemyFlagInfo().getPosition();
@@ -107,9 +117,17 @@ public class MyCommander extends SandboxCommander {
      */
     @Override
     public void tick() {
-        System.out.println("list size: " + attackers.size());
+        //System.out.println("list size: " + attackers.size());
 
-        allLivingBots = gameInfo.botsAlive();
+        /*
+        for (BotInfo bot : gameInfo.botsAlive()) {
+            List<String> visibleEnemies = bot.getVisibleEnemies();
+            if(visibleEnemies != null)
+            for (String enemy : visibleEnemies) {
+                visibleEnemies.add(enemy);
+            }
+        }
+        */
 
         if (attackers.size() > myTeamSize) {
             checkListForEnemyBotNames(attackers, enemyTeamMemberNames);
@@ -134,8 +152,7 @@ public class MyCommander extends SandboxCommander {
            remove all of these instructions from here into an abstracted class so that it can manage any type of list/bot to make overall control
            of managing objectives easier
             */
-            if((defender == null || defender.equals(bot)) && !bot.hasFlag())
-            {
+            if ((defender == null || defender.equals(bot)) && !bot.hasFlag()) {
                 if (!isBotAssigned(attackers, bot))
                     removeFromList(attackers, bot);
 
@@ -147,22 +164,18 @@ public class MyCommander extends SandboxCommander {
                 Vector2 targetMax = targetPosition.add(new Vector2(2f, 2f));
                 Vector2 goal = levelInfo.findRandomFreePositionInBox(new Area(targetMin, targetMax));
 
-                if(goal.sub(defender.getPosition()).length() > 8f)
+                if (goal.sub(defender.getPosition()).length() > 8f)
                     issue(new ChargeCmd(defender.getName(), goal, "running to defend"));
-                else
-                {
+                else {
                     List<FacingDirection> dirs = new ArrayList<FacingDirection>();
 
                     dirs.add(new FacingDirection(defender.getFacingDirection(), 1));
-                    dirs.add(new FacingDirection(defender.getFacingDirection().rotate((float)90),1));
-                    dirs.add(new FacingDirection(defender.getFacingDirection().rotate((float)180),1));
-                    dirs.add(new FacingDirection(defender.getFacingDirection().rotate((float)270),1));
+                    dirs.add(new FacingDirection(defender.getFacingDirection().rotate((float) 90), 1));
+                    dirs.add(new FacingDirection(defender.getFacingDirection().rotate((float) 180), 1));
+                    dirs.add(new FacingDirection(defender.getFacingDirection().rotate((float) 270), 1));
                     issue(new DefendCmd(defender.getName(), dirs, "turning to defend"));
                 }
-            }
-
-
-            else if(!isBotAssigned(attackers, bot)) {
+            } else if (!isBotAssigned(attackers, bot)) {
                 attackers.add(bot);
                 System.out.println(bot.getName());
             } else {
@@ -176,12 +189,26 @@ public class MyCommander extends SandboxCommander {
                     flagCarryBehavior(attackers.get(botIndex));
                 } else {
                     if (attackers.get(botIndex).getVisibleEnemies().size() > 0) {
+
                         List<String> visibleEnemyNames = bot.getVisibleEnemies();
+                        ArrayList<BotInfo> visibleBots = new ArrayList<BotInfo>();
+                        ArrayList<Vector2> enemyVectors = new ArrayList<Vector2>();
                        /*TODO
                        Calculate the closest enemies and teammates and add logic to choose action to take
                         */
-                        ArrayList<Vector2> visibleEnemies = getVisibleEnemyPositionsList(visibleEnemyNames);
-                        Vector2 target = gameInfo.getEnemyFlagInfo().getPosition();
+                        for (String enemies : visibleEnemyNames) {
+                            BotInfo visibleBot = gameInfo.getBotInfo(enemies);
+                            visibleBots.add(visibleBot);
+                        }
+                        for (BotInfo bots : visibleBots){
+
+                            enemyVectors.add(bots.getPosition());
+                        }
+
+                        Vector2 closestEnemy = findClosestVisibleEnemy(attackers.get(botIndex).getPosition(), enemyVectors);
+
+                        Vector2 check = levelInfo.findNearestFreePosition(closestEnemy);
+                        Vector2 target = check;
 
                         issue(new AttackCmd(attackers.get(botIndex).getName(), target, null, "enemies seen"));
                     } else {
@@ -202,8 +229,39 @@ public class MyCommander extends SandboxCommander {
                 }
             }
         }
+        visibleEnemies.clear();
     }
 
+    private Vector2 findClosestVisibleEnemy(Vector2 currentBotPosition, ArrayList<Vector2> bots) {
+
+        Vector2 closestVector;
+        closestVector = null;
+        int smallestDistance = 0;
+
+        for (Vector2 bot2 : bots) {
+            if (closestVector == null || bots.size() <= 1) {
+                closestVector = bot2;
+            } else {
+
+                int botX = (int) currentBotPosition.getX();
+                int botY = (int) currentBotPosition.getY();
+                int bot2X = (int) bot2.getX();
+                int bot2Y = (int) bot2.getY();
+                int distance = (int) Math.sqrt((bot2X - botX) * (bot2X - botX) + (bot2Y - botY) * (bot2Y - botY));
+
+                if (smallestDistance == 0){
+                    smallestDistance = distance;
+                    closestVector = bot2;
+                }
+                else if (distance < smallestDistance) {
+                    smallestDistance = distance;
+                    closestVector = bot2;
+                }
+            }
+        }
+        System.out.println("Closest enemy found at " + closestVector + " is " + smallestDistance + " away!");
+        return closestVector;
+    }
 
     private Vector2 getFlankingPosition(BotInfo bot, Vector2 target) {
         List<Vector2> options = new ArrayList<Vector2>();
@@ -224,11 +282,11 @@ public class MyCommander extends SandboxCommander {
         if (list != null) {
             for (BotInfo bot2 : list)
                 if (bot2.getName().equals(bot.getName())) {
-                    System.out.println("Bot is assigned");
+                    //System.out.println("Bot is assigned");
                     return true;
                 }
         }
-        System.out.println("Bot is not assigned");
+        //System.out.println("Bot is not assigned");
         return false;
     }
 
