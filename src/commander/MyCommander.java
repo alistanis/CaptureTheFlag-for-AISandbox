@@ -7,6 +7,7 @@ import com.aisandbox.cmd.*;
 import com.aisandbox.cmd.info.*;
 import com.aisandbox.cmd.cmds.*;
 import com.aisandbox.util.*;
+import com.sun.corba.se.impl.logging.ORBUtilSystemException;
 
 
 public class MyCommander extends SandboxCommander {
@@ -44,12 +45,15 @@ public class MyCommander extends SandboxCommander {
 
     private int blockHeights[][];
 
+    double ticksPerSecond;
+    double timeInMilis;
+    double timeSinceLastTick;
 
     /**
      * Custom commander class construtor.
      */
     public MyCommander() {
-        name = "JavaCmd";
+        name = "CMC";
 
         attacker = null;
         defender = null;
@@ -75,6 +79,7 @@ public class MyCommander extends SandboxCommander {
         isOurFlagHeld = false;
         doWeHaveTheirFlag = false;
 
+        timeInMilis = System.currentTimeMillis();
 
         blockHeights = levelInfo.getBlockHeights();
 
@@ -117,6 +122,18 @@ public class MyCommander extends SandboxCommander {
      */
     @Override
     public void tick() {
+        ticksPerSecond++;
+        timeSinceLastTick += System.currentTimeMillis();
+
+        if (timeSinceLastTick >= timeInMilis + 1000){
+            System.out.println(ticksPerSecond);
+            ticksPerSecond = 0;
+            timeSinceLastTick = 0;
+            timeInMilis = System.currentTimeMillis();
+        }
+
+
+
         //System.out.println("list size: " + attackers.size());
 
         /*
@@ -167,6 +184,11 @@ public class MyCommander extends SandboxCommander {
                 if (goal.sub(defender.getPosition()).length() > 8f)
                     issue(new ChargeCmd(defender.getName(), goal, "running to defend"));
                 else {
+
+                    /*TODO
+                    calculate most likely lanes of attack from enemies and have the bot look there instead of randomly searching in a 360 arc like a fucking moron
+                     */
+
                     List<FacingDirection> dirs = new ArrayList<FacingDirection>();
 
                     dirs.add(new FacingDirection(defender.getFacingDirection(), 1));
@@ -194,7 +216,7 @@ public class MyCommander extends SandboxCommander {
                         ArrayList<BotInfo> visibleBots = new ArrayList<BotInfo>();
                         ArrayList<Vector2> enemyVectors = new ArrayList<Vector2>();
                        /*TODO
-                       Calculate the closest enemies and teammates and add logic to choose action to take
+                       Add more advanced decision making based on the currently visible enemy bots
                         */
                         for (String enemies : visibleEnemyNames) {
                             BotInfo visibleBot = gameInfo.getBotInfo(enemies);
@@ -476,6 +498,8 @@ public class MyCommander extends SandboxCommander {
      * Called when the server sends the "shutdown" message to the commander.
      * Use this function to teardown your bot after the game is over.
      */
+
+
     @Override
     public void shutdown() {
         for (int i = 0; i < attackers.size(); i++) {
